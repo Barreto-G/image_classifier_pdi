@@ -1,4 +1,4 @@
-import os, json, cv2
+import os, json, cv2, itertools
 import numpy as np
 import albumentations as A
 
@@ -11,7 +11,7 @@ class Image:
         self.file_name = name
 
 
-    def rle_to_mask(self, rle_code: list, mask_shape: tuple):
+    def _rle_to_mask(self, rle_code: list, mask_shape: tuple):
         """
         Convert RLE (Run Length Encoding) to a binary mask.
 
@@ -31,6 +31,22 @@ class Image:
                 mask[current_pos:current_pos + count] = 1
                 current_pos += count
         return mask.reshape(mask_shape, order='F')
+    
+    def _mask_to_rle(self, mask) -> list:
+        """
+        Convert a binary mask to RLE (Run Length Encoding).
+
+        Args:
+            mask (numpy.ndarray): Binary mask.
+
+        Returns:
+            list: RLE encoded mask.
+        """
+        pixels = mask.flatten(order='F')
+        rle = [sum(1 for _ in group)
+               for pixel, group in itertools.groupby(pixels)]
+        rle = [0] + rle if pixels[0] else rle
+        return rle
 
     def __repr__(self):
         return f'file_name:{self.file_name},category:{self.category_id},bbox:{self.bbox},mask:{self.mask},content:{self.content}'
