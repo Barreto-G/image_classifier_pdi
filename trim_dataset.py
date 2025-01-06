@@ -103,7 +103,11 @@ class TrimDataset:
             json_file['images'].append(image_info)
 
     def equalize_histogram(self, image):
-        return A.equalize(img=image.content, mode='cv', by_channels=True)
+        img_yuv = cv2.cvtColor(image.content, cv2.COLOR_BGR2YUV)
+        clahe = cv2.createCLAHE(
+            clipLimit=1.0, tileGridSize=(8,8))
+        img_yuv[:, :, 0] = clahe.apply(img_yuv[:, :, 0])
+        return cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
 
     def normalize_dataset(self):
         normalized_images = []
