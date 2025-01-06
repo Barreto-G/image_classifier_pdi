@@ -1,7 +1,7 @@
 import json, os, cv2
 from image import Image
 import albumentations as A
-import uuid, copier
+import uuid
 
 class TrimDataset:
     def __init__(self, base_dir, json_file:str):
