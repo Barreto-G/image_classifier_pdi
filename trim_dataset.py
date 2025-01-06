@@ -9,6 +9,7 @@ class TrimDataset:
         self.images = []        
         self.categories = {}
         self.json = None
+        self.normalized_json= None
 
         self._load_data(json_file)
 
@@ -103,24 +104,41 @@ class TrimDataset:
 
         self.json['images'].append(image_info)
 
-    def save_annotations(self):
+    def save_annotations(self, file_name):
         os.makedirs('output', exist_ok=True)
-        with open(os.path.join('output', 'annotations.json'), 'w') as f:
+        with open(os.path.join('output', file_name), 'w') as f:
             json.dump(self.json, f, indent=0)
 
     def equalize_histogram(self, image):
-        pass
+        img = A.equalize(img=image.content, mask=image.mask, mode='cv', by_channels=True)
+        return img
 
     def normalize_dataset(self):
-        pass
+        copy_images = self.images.copy()
+        for image in copy_images:
+            equalized_img = self.equalize_histogram(image)
+            equalized_img_name = f'{image.file_name}-equalized-{uuid.uuid4().hex[:4]}.png'
+            aux = Image(name=equalized_img_name, 
+                                    bbox=image.bbox,
+                                    mask= image.mask,
+                                    category=image.category_id,
+                                    content=equalized_img)
+            self.images.append(aux)
+            path_normalized = os.path.join('normalized_dataset', self.categories[aux.category_id])
+            if not os.path.exists(path_normalized):
+                os.makedirs(path_normalized)
+            path_normalized = os.path.join(path_normalized, aux.file_name)
+            cv2.imwrite(path_normalized, aux.content)
+            self.add_json(aux)
     
     def __repr__(self):
         return f'base_dir:{self.base_dir},categories:{self.categories},images:{[image for image in self.images]}'
 
 if __name__ == "__main__":
-    json_data_path = 'segmentation_data.json'
-    images_path = 'trims_dataset'
+    json_data_path = 'output/annotations.json'
+    images_path = 'augmented_dataset'
 
     dataset = TrimDataset(images_path, json_data_path)
-    dataset.dataset_augmentation()
-    dataset.save_annotations()
+    #dataset.dataset_augmentation()
+    dataset.normalize_dataset()
+    dataset.save_annotations('normalized_annotations.json')
