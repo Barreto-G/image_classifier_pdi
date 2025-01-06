@@ -4,18 +4,17 @@ import albumentations as A
 import uuid
 
 class TrimDataset:
-    def __init__(self, base_dir, json_file:str):
+    def __init__(self, base_dir):
         self.base_dir = base_dir
         self.images = []        
         self.categories = {}
         self.json = None
-        self.normalized_json= None
 
-        self._load_data(json_file)
+        self._load_data()
 
-    def _load_data(self, json_file):
+    def _load_data(self):
         try:
-            with open(json_file) as f:
+            with open(os.path.join(self.base_dir, 'metadata.json'), 'r') as f:
                 self.json = json.load(f)
         except FileNotFoundError:
             print("Erro: Arquivo nao encontrado no caminho especificado")
@@ -26,7 +25,7 @@ class TrimDataset:
 
         for img_data in self.json['images']:
             img = Image()
-            ann = self.json[''][img_data['id']-1]
+            ann = self.json['annotation'][img_data['id']-1]
 
             img.category_id = ann['category_id']
 
@@ -66,21 +65,18 @@ class TrimDataset:
         for image in copy_images:
             for i in range(2):
                 augmented_img = self._img_augmentation(image)
-                augmented_img_name = f'{image.file_name}-augmented-{uuid.uuid4().hex[:4]}.png'
+                augmented_img_name = f'{image.file_name[:-4]}-augmented-{uuid.uuid4().hex[:4]}.png'
                 aux = Image(name=augmented_img_name, 
                                       bbox=augmented_img['bbox'],
                                       mask= augmented_img['mask'],
                                       category=image.category_id,
                                       content=augmented_img['image'])
                 self.images.append(aux)
-                path_augmented = os.path.join('augmented_dataset', self.categories[aux.category_id])
-                if not os.path.exists(path_augmented):
-                    os.makedirs(path_augmented)
-                path_augmented = os.path.join(path_augmented, aux.file_name)
-                cv2.imwrite(path_augmented, aux.content)
                 self.add_json(aux)
+        self.save_images('augmented_dataset')
+        self.save_annotations('augmented_dataset')
 
-    def add_json(self, image: Image):
+    def add_json(self, image: Image, json_file= None):
         segmentation = image._mask_to_rle(image.mask)
         img_id = len(self.images)
         annotation = {
@@ -93,52 +89,62 @@ class TrimDataset:
             'segmentation': {'counts': segmentation, 'size': [2112, 2112]}
         }
 
-        self.json[''].append(annotation)
-
         image_info = {
             'id': img_id,
             'file_name': image.file_name,
             'width': 2112,
             'height': 2112
         }
-
-        self.json['images'].append(image_info)
-
-    def save_annotations(self, file_name):
-        os.makedirs('output', exist_ok=True)
-        with open(os.path.join('output', file_name), 'w') as f:
-            json.dump(self.json, f, indent=0)
+        if json_file == None:
+            self.json['annotation'].append(annotation)
+            self.json['images'].append(image_info)
+        else:
+            json_file['annotation'].append(annotation)
+            json_file['images'].append(image_info)
 
     def equalize_histogram(self, image):
-        img = A.equalize(img=image.content, mask=image.mask, mode='cv', by_channels=True)
-        return img
+        return A.equalize(img=image.content, mode='cv', by_channels=True)
 
     def normalize_dataset(self):
-        copy_images = self.images.copy()
-        for image in copy_images:
+        normalized_images = []
+        normalized_json = self.json.copy()
+        normalized_json['annotation'].clear()
+        normalized_json['images'].clear()
+        for image in self.images:
             equalized_img = self.equalize_histogram(image)
-            equalized_img_name = f'{image.file_name}-equalized-{uuid.uuid4().hex[:4]}.png'
+            equalized_img_name = f'{image.file_name[:-4]}-equalized.png'
             aux = Image(name=equalized_img_name, 
                                     bbox=image.bbox,
                                     mask= image.mask,
                                     category=image.category_id,
                                     content=equalized_img)
-            self.images.append(aux)
-            path_normalized = os.path.join('normalized_dataset', self.categories[aux.category_id])
-            if not os.path.exists(path_normalized):
-                os.makedirs(path_normalized)
-            path_normalized = os.path.join(path_normalized, aux.file_name)
-            cv2.imwrite(path_normalized, aux.content)
-            self.add_json(aux)
+            normalized_images.append(aux)
+            self.add_json(aux, normalized_json)
+        self.save_images('normalized_dataset', normalized_images)
+        self.save_annotations(path='normalized_dataset', json_file=normalized_json)
+    
+    def save_annotations(self, path="", file_name="metadata.json", json_file=None):
+        json_aux = json_file if json_file != None else self.json
+        if path != "":
+            os.makedirs(path, exist_ok=True)
+            with open(os.path.join(path, file_name), 'w') as f:
+                json.dump(json_aux, f, indent=None)
+        else:
+            with open(file_name, 'w') as f:
+                json.dump(json_aux, f, indent=None)    
+
+    def save_images(self, data_folder, images = None):
+        if images is None:
+            images = self.images
+        for img in images:
+            path = os.path.join(data_folder, self.categories[img.category_id])
+            if not os.path.exists(path):
+                os.makedirs(path)
+            path = os.path.join(path, img.file_name)
+            cv2.imwrite(path, img.content)
     
     def __repr__(self):
         return f'base_dir:{self.base_dir},categories:{self.categories},images:{[image for image in self.images]}'
 
 if __name__ == "__main__":
-    json_data_path = 'output/annotations.json'
-    images_path = 'augmented_dataset'
-
-    dataset = TrimDataset(images_path, json_data_path)
-    #dataset.dataset_augmentation()
-    dataset.normalize_dataset()
-    dataset.save_annotations('normalized_annotations.json')
+    print("Trim Dataset definition")
