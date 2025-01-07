@@ -1,3 +1,6 @@
 /trims_dataset/*
 /augmented_dataset/*
 /normalized_dataset/*
+/downscaled_dataset/*
+/__pycache__/*
+*.png
