@@ -1,0 +1,3 @@
+Projeto desenvolvido por Gabriel Barreto e Johanna Kirchner.
+
+Os arquivos `image.py` e `trim_dataset.py` contém as classes base para o desenvolvimento do projeto. O arquivo `utilidades.py` contém funções utilitárias utilizadas ao longo do projeto. O arquivo `show_dataset_info.ipynb` mostra as informações referentes ao dataset junto com o arquivo `metadados.json`. O arquivo `projeto_pdi.ipynb` mostra um panorama e o pipeline geral do projeto. O arquivo `trims_dataset.tar.gz` possui o conjunto de imagens cruas que compõe o dataset, sendo que a pasta `trims_dataset` contida dentro dele deve ser extraída para que o `projeto_pdi.ipynb` possa ser executado.

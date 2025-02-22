@@ -1,6 +1,6 @@
 from trim_dataset import TrimDataset
 import matplotlib.pyplot as plt
-import random, cv2
+import random, cv2, os
 import tensorflow as tf
 from tensorflow.keras import layers, models, Input
 import numpy as np
@@ -253,7 +253,7 @@ def histogram_mean_and_variance(average_prototype, red_images: list, green_image
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
     axes[0].imshow(average_prototype)
-    axes[0].set_title("Protótipo médio")
+    axes[0].set_title(f"Protótipo médio {name}")
     axes[0].axis("off")
 
 
@@ -276,9 +276,7 @@ def histogram_mean_and_variance(average_prototype, red_images: list, green_image
 
     # Display plots
     plt.tight_layout()
-    dir_path = base_dir = os.getcwd()
-    output_path = os.path.join(dir_path, 'docs', f'{name}average_histogram_variance.png')
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
 
 def split_channels(images:list):
     '''
@@ -303,7 +301,7 @@ def split_channels(images:list):
 
     return red_images, green_images, blue_images
 
-def generate_image_statistics(images: list, classes: list) -> None:
+def generate_image_statistics(images: list, classes: dict) -> None:
     '''
     Gera estatísticas para todas as classes de imagens.
 
@@ -312,8 +310,8 @@ def generate_image_statistics(images: list, classes: list) -> None:
         classes: lista de nomes das classes.
     '''
 
-    for class_name in classes:
-        class_images = [img.content for img in images if img.category_id == class_name]
+    for id,class_name in classes.items():
+        class_images = [img.content for img in images if img.category_id == id]
 
         if not class_images:
             print(f"Sem imagens para a classe '{class_name}'")
@@ -323,7 +321,3 @@ def generate_image_statistics(images: list, classes: list) -> None:
         prototype = average_prototype(red_images, green_images, blue_images)
         histogram_mean_and_variance(prototype, red_images, green_images, blue_images, class_name)
 
-        print(f"Estatísticas da classe '{class_name}':")
-        print("\tProtótipo médio calculado com sucesso!")
-        print("\tVariância do histograma calculada!")
-        print("\tMédia do histograma calculada!")

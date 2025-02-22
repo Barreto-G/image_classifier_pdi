@@ -3,71 +3,71 @@
   "description": "Dataset criado para o trabalho de Processamento Digital de Imagens. Contém imagens de itens de aviamento com fundo preto e branco.",
   "classes": [
     {
-      "class_id": 0,
+      "class_id": 1,
       "class_name": "amigurumi",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 1,
+      "class_id": 2,
       "class_name": "button",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 2,
+      "class_id": 3,
       "class_name": "clea",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 3,
+      "class_id": 4,
       "class_name": "crochet_needle",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 4,
+      "class_id": 5,
       "class_name": "paint",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 5,
+      "class_id": 6,
       "class_name": "ribbon",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 6,
+      "class_id": 7,
       "class_name": "skein",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 7,
+      "class_id": 8,
       "class_name": "spool",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 8,
+      "class_id": 9,
       "class_name": "wool",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     },
     {
-      "class_id": 9,
+      "class_id": 10,
       "class_name": "zipper",
       "num_items": 5,
       "image_variants_per_item": ["V1-B", "V1-W", "V2-B", "V2-W"]
     }   
   ],
   "image_format": "PNG",
-  "image_dimensions": "2112 x 2112",
+  "image_dimensions": "224 x 224",
   "total_images": 200,
   "directory_structure": "Cada classe está em um diretório separado, nomeado com o nome da classe.",
-  "metadata_created_by": "Gabriel Barreto",
+  "metadata_created_by": "Gabriel Barreto, Johanna Kirchner",
   "metadata_creation_date": "2024-12-30",
   "notes": "As imagens foram capturadas numa câmera digital e passaram por corte e padronização de tamanho. Data augmentation será aplicado em etapas posteriores."
 }
