@@ -13,6 +13,9 @@ class TrimDataset:
         self._load_data()
 
     def _load_data(self):
+        """
+        Carrega os dados de imagens e anotações do arquivo JSON.
+        """
         try:
             with open(os.path.join(self.base_dir, 'metadata.json'), 'r') as f:
                 self.json = json.load(f)
@@ -60,6 +63,16 @@ class TrimDataset:
             
 
     def _img_augmentation(self, image, angle=15):
+        """
+        Faz a aumentação de uma imagem, em que é aplicando uma transformação geométrica aleatória
+        e transformações de brilho e constraste, desfoque gaussiano e saturação com probablidade de
+        serem aplicadas de 50%.
+        Args:
+            image: imagem que será aumentada.
+            angle: angulo máximo de rotação para transformação de rotação.
+        Returns:
+            imagem aumentada.
+        """
         transform = A.Compose([
             A.OneOf([
                 A.SafeRotate(limit=angle, border_mode=cv2.BORDER_REPLICATE),
@@ -78,6 +91,9 @@ class TrimDataset:
         return result
 
     def dataset_augmentation(self):
+        """
+        Faz a aumentação de todo o dataset da classe.
+        """
         copy_images = self.images.copy()
         for image in copy_images:
             for i in range(2):
@@ -94,6 +110,13 @@ class TrimDataset:
         self.save_annotations('augmented_dataset')
 
     def add_json(self, image: Image, json_file= None):
+        """
+        Adiciona informações de uma imagem e suas anotações a um JSON no formato COCO.
+
+        Args:
+            image: imagem
+            json_file: JSON onde as informações serão adicionadas. Se None, usa o JSON interno.
+        """
         segmentation = image._mask_to_rle(image.mask)
         if json_file == None:
             img_id = len(self.images)
@@ -124,6 +147,16 @@ class TrimDataset:
             json_file['images'].append(image_info)
 
     def equalize_histogram(self, image):
+        """
+        Aplica equalização de histograma (CLAHE) na imagem. Converte a imagem de BGR para YUV e aplica
+        o CLAHE na componente de iluminância.
+
+        Args:
+            image : imagem que será equalizada
+
+        Returns:
+            imagem com histograma equalizado no formato BGR..
+        """
         img_yuv = cv2.cvtColor(image.content, cv2.COLOR_BGR2YUV)
         clahe = cv2.createCLAHE(
             clipLimit=1.0, tileGridSize=(8,8))
@@ -131,6 +164,9 @@ class TrimDataset:
         return cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
 
     def normalize_dataset(self):
+        """
+        Normaliza todas as imagens do dataset da classe, aplicando equalização de histograma e salvando o novo conjunto.
+        """
         normalized_images = []
         normalized_json = self.json.copy()
         normalized_json['annotation'].clear()
@@ -149,6 +185,14 @@ class TrimDataset:
         self.save_annotations(path='normalized_dataset', json_file=normalized_json)
     
     def save_annotations(self, path="", file_name="metadata.json", json_file=None):
+        """
+        Salva as anotações em um arquivo JSON
+
+        Args:
+            path: diretório para salvar o JSON, por padrão será o diretório autal.
+            file_name: nome do JSON, por padrão será metadata.json .
+            json_file: objeto JSON a ser salvo, por padrão será utilizado o JSON da classe.
+        """
         json_aux = json_file if json_file != None else self.json
         if path != "":
             os.makedirs(path, exist_ok=True)
@@ -159,6 +203,14 @@ class TrimDataset:
                 json.dump(json_aux, f, indent=None)    
 
     def save_images(self, data_folder, images = None):
+        """
+        Salva as imagens em subpastas de acordo com a sua classe.
+
+        Args:
+            data_folder: diretório onde as imagens serão salvas.
+            images: imagens a ser salvas, por padrão usa o conjunto de imagens da classe.
+
+        """
         if images is None:
             images = self.images
         for img in images:
@@ -168,27 +220,20 @@ class TrimDataset:
             path = os.path.join(path, img.file_name)
             cv2.imwrite(path, img.content)
     
-    def split_dataset(self, train_ratio=0.8, eval_ratio=0.1, test_ratio=0.1):
-        num_images = len(self.images)
-        num_train = int(train_ratio * num_images)
-        num_val = int(eval_ratio * num_images)
-
-        indices = np.random.permutation(num_images)
-        self.data_split['train'] = indices[:num_train]
-        self.data_split['val'] = indices[num_train:num_train + num_val]
-        self.data_split['test'] = indices[num_train + num_val:]
-
 
     def resize_image(self, image:Image, target_size=(224, 224)):
         """
         Redimensiona uma imagem e ajusta sua bounding box proporcionalmente ao novo tamanho.
-        
-        :param image: Imagem original (lida com cv2.imread()).
-        :param bbox: Bounding box original no formato [x_min, y_min, x_max, y_max].
-        :param target_size: Tamanho de destino da imagem (largura, altura).
-        :return: Imagem redimensionada e bounding box ajustada.
-        """
-        # Obtém as dimensões originais da imagem
+
+        Args:
+            image: imagem original (lida com cv2.imread()).
+            bbox: bounding box original no formato [x_min, y_min, x_max, y_max].
+            target_size: tamanho de destino da imagem (largura, altura).
+
+        Returns:
+            numpy.ndarray: Imagem redimensionada.
+            list: Bounding box ajustada no novo tamanho.
+        """        # Obtém as dimensões originais da imagem
         original_height, original_width = image.content.shape[:2]
         target_width, target_height = target_size
 

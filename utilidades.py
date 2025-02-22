@@ -182,3 +182,148 @@ def split_dataset(data, train_ratio=0.8, test_ratio=0.1, validate_ratio=0.1):
     validate_data = data[train_size + test_size:]
 
     return train_data, test_data, validate_data
+
+
+
+# prototipo medio 
+def average_prototype(red_images: list, green_images: list, blue_images: list): 
+    """
+    Calculate the average prototype of a class, which is the mean of all images.
+
+    Args:
+        red_images: List of NumPy arrays representing the red channel of images.
+        green_images: List of NumPy arrays representing the green channel of images.
+        blue_images: List of NumPy arrays representing the blue channel of images.
+
+    Returns:
+        prototype: NumPy array representing the average prototype image.
+    """
+    mean_red = np.mean(red_images, axis=0)
+    mean_green = np.mean(green_images, axis=0)
+    mean_blue = np.mean(blue_images, axis=0)
+
+    # Remonta as imagens unindo seus canais de cores
+    average_prototype = np.stack((mean_red, mean_green, mean_blue), axis=-1)
+
+    # Garante que os valores estagem entre 0, 255
+    average_prototype = np.clip(average_prototype, 0, 255).astype(np.uint8)
+
+    return average_prototype
+
+# histograma medio e variancia
+def histogram_mean_and_variance(average_prototype, red_images: list, green_images: list, 
+                                blue_images: list, name: str, bins=256):
+    """
+    Calculate and plot the mean histogram and variance of histograms for a list of images,
+    alongside the average prototype image.
+
+    Args:
+        average_prototype: NumPy array representing the average prototype image.
+        red_images: List of NumPy arrays representing the red channel of images.
+        green_images: List of NumPy arrays representing the green channel of images.
+        blue_images: List of NumPy arrays representing the blue channel of images.
+        name: string name of the class
+        bins: Number of bins for the histogram (default: 256).
+
+    Returns:
+        Tuple containing the mean and variance of the RGB histograms.
+    """
+    # Armazenar os histogramas
+    hist_reds, hist_greens, hist_blues = [], [], []
+    
+    # Gera o histograma para cada canal de cor
+    for red, green, blue in zip(
+            red_images, green_images, blue_images):
+        hist_reds.append(np.histogram(red, bins=bins, range=(0, 256))[0])
+        hist_greens.append(np.histogram(green, bins=bins, range=(0, 256))[0])
+        hist_blues.append(np.histogram(blue, bins=bins, range=(0, 256))[0])
+    
+
+    # Calcula a média dos histogramas 
+    mean_hist_red = np.mean(hist_reds, axis=0)
+    mean_hist_green = np.mean(hist_greens, axis=0)
+    mean_hist_blue = np.mean(hist_blues, axis=0)
+
+    # Calcula a variancia dos histogramas
+    var_hist_red = np.var(hist_reds, axis=0)
+    var_hist_green = np.var(hist_greens, axis=0)
+    var_hist_blue = np.var(hist_blues, axis=0)
+
+    # Plota as figuras de cada classe e métricas
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+    axes[0].imshow(average_prototype)
+    axes[0].set_title("Protótipo médio")
+    axes[0].axis("off")
+
+
+    axes[1].plot(mean_hist_red, color="red", label="Histograma médio - Red")
+    axes[1].plot(mean_hist_green, color="green", label="Histograma médio - Green")
+    axes[1].plot(mean_hist_blue, color="blue", label="Histograma médio - Blue")
+    axes[1].set_title("Histograma médio RGB")
+    axes[1].set_xlabel("Intensidade de Pixel")
+    axes[1].set_ylabel("Frequência média")
+    axes[1].legend()
+
+
+    axes[2].plot(var_hist_red, color="red", label="Variância - Red")
+    axes[2].plot(var_hist_green, color="green", label="Variância - Green")
+    axes[2].plot(var_hist_blue, color="blue", label="Variância - Blue")
+    axes[2].set_title("Variância RGB")
+    axes[2].set_xlabel("Intensidade de Pixel")
+    axes[2].set_ylabel("Variância")
+    axes[2].legend()
+
+    # Display plots
+    plt.tight_layout()
+    dir_path = base_dir = os.getcwd()
+    output_path = os.path.join(dir_path, 'docs', f'{name}average_histogram_variance.png')
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
+def split_channels(images:list):
+    '''
+    Segmneta as imagens nos canais RED, GREEN e BLUE
+
+    Args:
+        images: lista de numpy array das imagens.
+    
+    Returns:
+        red_images: lista de numpy arrays que representam o canal RED das imagens.
+        green_images: lista de numpy arrays que representam o canal GREEN das imagens.
+        blue_images: lista de numpy arrays que representam o canal BLUE das imagens.
+    '''
+    red_images, green_images, blue_images = [], [], []
+
+    for img in images:
+        red_channel, green_channel, blue_channel = cv2.split(img)
+        red_images.append(red_channel)
+        green_images.append(green_channel)
+        blue_images.append(blue_channel)
+
+
+    return red_images, green_images, blue_images
+
+def generate_image_statistics(images: list, classes: list) -> None:
+    '''
+    Gera estatísticas para todas as classes de imagens.
+
+    Args:
+        images: lista de objetos Image.
+        classes: lista de nomes das classes.
+    '''
+
+    for class_name in classes:
+        class_images = [img.content for img in images if img.category_id == class_name]
+
+        if not class_images:
+            print(f"Sem imagens para a classe '{class_name}'")
+            continue
+
+        red_images, green_images, blue_images = split_channels(class_images)
+        prototype = average_prototype(red_images, green_images, blue_images)
+        histogram_mean_and_variance(prototype, red_images, green_images, blue_images, class_name)
+
+        print(f"Estatísticas da classe '{class_name}':")
+        print("\tProtótipo médio calculado com sucesso!")
+        print("\tVariância do histograma calculada!")
+        print("\tMédia do histograma calculada!")
