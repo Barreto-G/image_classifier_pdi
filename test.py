@@ -80,4 +80,4 @@ def plot_class_grid(trim_dataset, num_samples=10, mode="nobbox"):
 
 
 dataset = TrimDataset('normalized_dataset')
-plot_class_grid(dataset,5, 'gt_mask')
+plot_class_grid(dataset, 2, 'nobbox')
